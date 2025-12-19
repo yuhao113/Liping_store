@@ -9,7 +9,7 @@ const products = [
     {
         id: "bag-black",
         name: "鮮美的鰹魚卵和鮭魚卵小品",
-        price: 890,
+        price: 100,
         color: "原味",
         image: "./image/products/鮮美的鰹魚卵和鮭魚卵小品.png"
     },

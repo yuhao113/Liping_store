@@ -65,15 +65,17 @@
             font-weight: 700;
         }
 
-        .linepay-link {
+        .pay-link {
             display: inline-block;
             margin-top: 1rem;
             padding: 12px 20px;
-            background: #00c300;
-            color: #fff;
             font-weight: 700;
             text-decoration: none;
+            color: #fff;
         }
+
+        .linepay-link { background: #00c300; }
+        .paypal-link { background: #0070ba; }
 
         .btn-finish {
             display: block;
@@ -136,6 +138,9 @@ if (!order) {
 const orderInfoDiv = document.getElementById("order-info");
 const payInfoDiv = document.getElementById("pay-info");
 
+// 🔴 改成你自己的 PayPal.me 名稱
+const paypalAccount = "captureworks";
+
 orderInfoDiv.innerHTML = `
     <h3>訂單資訊</h3>
     <p><span class="highlight">姓名：</span>${order.name}</p>
@@ -148,29 +153,46 @@ orderInfoDiv.innerHTML = `
     }
     <p><span class="highlight">商品小計：</span>NT$ ${order.subtotal}</p>
     <p><span class="highlight">運費：</span>NT$ ${order.shippingFee}</p>
-    <p><span class="highlight">訂單總金額：</span>NT$ ${order.total}</p>`
-    ;
+    <p><span class="highlight">訂單總金額：</span>NT$ ${order.total}</p>
+`;
 
 if (order.payType === "bank") {
+
     payInfoDiv.innerHTML = `
         <p class="highlight">銀行轉帳</p>
         <p>銀行代碼：700</p>
         <p>帳號：03012900181248</p>
         <p>戶名：一味烏魚子</p>
     `;
-} else {
+
+} else if (order.payType === "linepay") {
+
     payInfoDiv.innerHTML = `
-    <p class="highlight">LINE Pay 付款（人工確認）</p>
-    <p>目前使用個人 LINE Pay 收款，</p>
-    <p>請先加入官方 LINE，我們將提供 LINE Pay 收款方式給您。</p>
-    <a class="linepay-link" href="https://lin.ee/EdwlwIok" target="_blank">
-        加入官方 LINE
-    </a>
-`;
+        <p class="highlight">LINE Pay 付款（人工確認）</p>
+        <p>請先加入官方 LINE，我們將提供 LINE Pay 收款方式。</p>
+        <a class="pay-link linepay-link" href="https://lin.ee/EdwlwIok" target="_blank">
+            加入官方 LINE
+        </a>
+    `;
+
+} else if (order.payType === "paypal") {
+
+    const paypalUrl = `https://www.paypal.me/${paypalAccount}/${order.total}`;
+
+    payInfoDiv.innerHTML = `
+        <p class="highlight">PayPal 付款</p>
+        <p>點擊下方按鈕使用 PayPal 付款</p>
+        <a class="pay-link paypal-link" href="${paypalUrl}" target="_blank">
+            使用 PayPal 付款 NT$ ${order.total}
+        </a>
+        <p style="margin-top:0.8rem;color:#666;">
+            📌 請於 PayPal 備註填寫「訂購人姓名＋手機後三碼」
+        </p>
+    `;
 }
 
 function finishOrder() {
-    // 這裡「不要」清 cart，等你確認收款再清
+    // 此頁不清 cart，等 success.html 再清
     window.location.href = "success.html";
 }
 </script>

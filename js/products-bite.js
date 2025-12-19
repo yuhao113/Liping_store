@@ -9,7 +9,7 @@ window.products = [
     {
         id: "bag-black",
         name: "紅潤風乾魚卵與配料",
-        price: 890,
+        price: 100,
         color: "原味",
         image: "./image/products/紅潤風乾魚卵與配料.png"
     },

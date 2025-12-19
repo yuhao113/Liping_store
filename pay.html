@@ -8,6 +8,9 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
 
+    <!-- PayPal 官方 SDK（Live Client ID + USD） -->
+    <script src="https://www.paypal.com/sdk/js?client-id=BAAS93-Rx_jKpvJdRxwMZk8ccDcABKghKUAumsXKWaqxBHUP8iK3ePq3TBpOm8kJae3LhR790m_iyf0Pc4&currency=USD"></script>
+
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -65,20 +68,8 @@
             font-weight: 700;
         }
 
-        .pay-link {
-            display: inline-block;
-            margin-top: 1rem;
-            padding: 12px 20px;
-            font-weight: 700;
-            text-decoration: none;
-            color: #fff;
-        }
-
-        .linepay-link { background: #00c300; }
-        .paypal-link { background: #0070ba; }
-
         .btn-finish {
-            display: block;
+            display: none; /* 預設隱藏，非 PayPal 才顯示 */
             width: 100%;
             margin-top: 2.5rem;
             padding: 14px;
@@ -115,19 +106,20 @@
         <div class="pay-box" id="pay-info"></div>
     </div>
 
-    <!-- 提醒 -->
     <div class="note">
-        <p>📌 付款完成後，請加入官方 LINE 並傳送以下資訊：</p>
-        <p>✔ 付款截圖</p>
-        <p>✔ 訂購人姓名</p>
-        <p>✔ 手機號碼</p>
-        <p>✔ 超商門市（若為超商取貨）</p>
+        <p>📌 PayPal 付款完成後，系統會自動記錄交易。</p>
     </div>
 
-    <button class="btn-finish" onclick="finishOrder()">我已完成付款</button>
+    <button class="btn-finish" id="manual-finish" onclick="finishOrder()">我已完成付款</button>
 </div>
 
 <script>
+/* ===============================
+   防止 PayPal Buttons 重複 render
+   =============================== */
+let paypalRendered = false;
+
+/* 取得訂單資料 */
 const order = JSON.parse(localStorage.getItem("orderInfo"));
 
 if (!order) {
@@ -135,12 +127,12 @@ if (!order) {
     window.location.href = "cart.html";
 }
 
+/* DOM */
 const orderInfoDiv = document.getElementById("order-info");
 const payInfoDiv = document.getElementById("pay-info");
+const manualFinishBtn = document.getElementById("manual-finish");
 
-// 🔴 改成你自己的 PayPal.me 名稱
-const paypalAccount = "captureworks";
-
+/* 顯示訂單資訊 */
 orderInfoDiv.innerHTML = `
     <h3>訂單資訊</h3>
     <p><span class="highlight">姓名：</span>${order.name}</p>
@@ -156,43 +148,66 @@ orderInfoDiv.innerHTML = `
     <p><span class="highlight">訂單總金額：</span>NT$ ${order.total}</p>
 `;
 
-if (order.payType === "bank") {
-
-    payInfoDiv.innerHTML = `
-        <p class="highlight">銀行轉帳</p>
-        <p>銀行代碼：700</p>
-        <p>帳號：03012900181248</p>
-        <p>戶名：一味烏魚子</p>
-    `;
-
-} else if (order.payType === "linepay") {
-
-    payInfoDiv.innerHTML = `
-        <p class="highlight">LINE Pay 付款（人工確認）</p>
-        <p>請先加入官方 LINE，我們將提供 LINE Pay 收款方式。</p>
-        <a class="pay-link linepay-link" href="https://lin.ee/EdwlwIok" target="_blank">
-            加入官方 LINE
-        </a>
-    `;
-
-} else if (order.payType === "paypal") {
-
-    const paypalUrl = `https://www.paypal.me/${paypalAccount}/${order.total}`;
+/* ===============================
+   PayPal 付款
+   =============================== */
+if (order.payType === "paypal" && !paypalRendered) {
+    paypalRendered = true;
 
     payInfoDiv.innerHTML = `
         <p class="highlight">PayPal 付款</p>
-        <p>點擊下方按鈕使用 PayPal 付款</p>
-        <a class="pay-link paypal-link" href="${paypalUrl}" target="_blank">
-            使用 PayPal 付款 NT$ ${order.total}
-        </a>
-        <p style="margin-top:0.8rem;color:#666;">
-            📌 請於 PayPal 備註填寫「訂購人姓名＋手機後三碼」
-        </p>
+        <div id="paypal-button-container"></div>
     `;
+
+    console.log("PayPal SDK:", window.paypal);
+
+    paypal.Buttons({
+        createOrder: async () => {
+            const res = await fetch(
+                "https://fishshop-paypal.dennislin00701130113.workers.dev/create-order",
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        amount: (order.total / 32).toFixed(2) // USD
+                    })
+                }
+            );
+            const data = await res.json();
+            console.log("Create order response:", data);
+            return data.id;
+        },
+
+        onApprove: async (data) => {
+            const res = await fetch(
+                "https://fishshop-paypal.dennislin00701130113.workers.dev/capture-order",
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ orderID: data.orderID })
+                }
+            );
+            await res.json();
+            alert("✅ PayPal 付款完成！");
+            window.location.href = "success.html";
+        },
+
+        onError: err => {
+            console.error("PayPal error:", err);
+            alert("❌ PayPal 發生錯誤，請稍後再試");
+        }
+
+    }).render("#paypal-button-container");
+}
+
+/* ===============================
+   非 PayPal（轉帳 / LINE Pay）
+   =============================== */
+if (order.payType !== "paypal") {
+    manualFinishBtn.style.display = "block";
 }
 
 function finishOrder() {
-    // 此頁不清 cart，等 success.html 再清
     window.location.href = "success.html";
 }
 </script>

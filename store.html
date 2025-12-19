@@ -9,10 +9,7 @@
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        html {
-            scroll-behavior: smooth; /* 平滑滑動 */
-        }
+        html { scroll-behavior: smooth; }
 
         body {
             font-family: 'Noto Sans TC', sans-serif;
@@ -23,6 +20,7 @@
         a { text-decoration: none; color: inherit; }
         ul { list-style: none; }
 
+        /* ===== Header ===== */
         header {
             position: fixed;
             top: 0;
@@ -38,9 +36,31 @@
         }
 
         .logo { font-size: 1.5rem; font-weight: 700; }
-
         .nav-links { display: flex; gap: 2rem; }
 
+        .cart-link {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .cart-icon {
+            width: 24px;
+            height: 24px;
+        }
+
+        /* ===== 購物車數字 ===== */
+        #cart-count {
+            font-weight: 700;
+            line-height: 1;
+            transition: transform 0.2s ease;
+        }
+
+        #cart-count.bump {
+            transform: scale(1.4);
+        }
+
+        /* ===== Hero ===== */
         .hero {
             min-height: 100vh;
             padding-top: 64px;
@@ -57,15 +77,8 @@
             text-align: center;
         }
 
-        .hero h1 {
-            font-size: 3rem;
-            font-weight: 300;
-        }
-
-        .hero p {
-            margin: 1rem 0 2rem;
-            font-size: 1.1rem;
-        }
+        .hero h1 { font-size: 3rem; font-weight: 300; }
+        .hero p { margin: 1rem 0 2rem; font-size: 1.1rem; }
 
         .btn {
             padding: 12px 32px;
@@ -80,6 +93,7 @@
             transform: translateY(-1px);
         }
 
+        /* ===== Products ===== */
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -134,28 +148,31 @@
             cursor: pointer;
         }
 
-        .cart-icon {
-            width: 24px;
-            height: 24px;
-            display: block;
-        }
-
-        .cart-link {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        #cart-count {
-            line-height: 1;
-        }
-
         footer {
             background: #111;
             color: #fff;
             text-align: center;
             padding: 2rem;
         }
+
+        /* ===== Toast ===== */
+        .toast {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.9);
+            color: #fff;
+            padding: 12px 22px;
+            border-radius: 24px;
+            font-size: 14px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .25s ease;
+            z-index: 2000;
+        }
+
+        .toast.show { opacity: 1; }
 
         @media (max-width: 768px) {
             .product-grid { grid-template-columns: repeat(2, 1fr); }
@@ -168,13 +185,14 @@
 
 <header>
     <div class="logo">一味烏魚子.</div>
+
     <ul class="nav-links">
         <li><a href="bite.html">一口吃</a></li>
         <li><a href="slice.html">片裝</a></li>
     </ul>
 
     <a href="cart.html" class="cart-link">
-        <img src="./image/cart.png" alt="購物車" class="cart-icon">
+        <img src="./image/cart.png" class="cart-icon" alt="購物車">
         <span id="cart-count">0</span>
     </a>
 </header>
@@ -182,11 +200,9 @@
 <section class="hero">
     <h1>New Year 2026</h1>
     <p>嚴選熟成，入口即化的海味精華</p>
-    <!-- 關鍵：連到商品區 -->
     <a href="#products" class="btn">立即選購</a>
 </section>
 
-<!-- 關鍵：商品區 id -->
 <section class="container" id="products">
     <h2 class="section-title">熱銷推薦</h2>
     <div class="product-grid" id="product-grid"></div>
@@ -196,13 +212,13 @@
     &copy; 2025 LiPing Studio
 </footer>
 
+<!-- Toast -->
+<div id="toast" class="toast">已加入購物車</div>
+
 <!-- 商品資料 -->
 <script src="./js/products.js"></script>
-
-<!-- 商品渲染 -->
 <script src="./js/render-products.js"></script>
 
-<!-- 購物車邏輯 -->
 <script>
 function getCart() {
     return JSON.parse(localStorage.getItem("cart")) || [];
@@ -215,6 +231,19 @@ function saveCart(cart) {
 function updateCartCount() {
     const total = getCart().reduce((s, i) => s + i.qty, 0);
     document.getElementById("cart-count").textContent = total;
+}
+
+function bumpCartCount() {
+    const count = document.getElementById("cart-count");
+    count.classList.add("bump");
+    setTimeout(() => count.classList.remove("bump"), 200);
+}
+
+function showToast(text) {
+    const toast = document.getElementById("toast");
+    toast.textContent = text;
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 1500);
 }
 
 document.addEventListener("click", e => {
@@ -230,11 +259,12 @@ document.addEventListener("click", e => {
 
     const cart = getCart();
     const exist = cart.find(p => p.id === product.id);
-
     exist ? exist.qty++ : cart.push(product);
+
     saveCart(cart);
     updateCartCount();
-    alert("已加入購物車");
+    bumpCartCount();
+    showToast("已加入購物車 🛒");
 });
 
 updateCartCount();

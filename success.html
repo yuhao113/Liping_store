@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>付款完成 | Yiting</title>
+    <title>付款完成 | 一味烏魚子</title>
+    <link rel="icon" type="image/png" href="image/logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
 
     <style>
@@ -48,9 +49,12 @@
         <p>感謝您的購買，訂單已成功成立。</p>
         <a href="store.html">回到首頁</a>
     </div>
+
     <script>
+        // 結帳完成後，清空所有購物車相關資料
         localStorage.removeItem("cart");
-        // localStorage.removeItem("orderInfo"); // 視需求
+        localStorage.removeItem("cartCount");
+        // localStorage.removeItem("orderInfo"); // 若不需保留訂單資料可開啟
     </script>
 </body>
 </html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>PayPal Sandbox 最終測試（可跑版）</title>
+
+  <!-- ⚠️ 這一行「不能換行」 -->
+  <script src="https://www.paypal.com/sdk/js?client-id=AT8lvRVngt8hczYziulsUpltH-dc5lZJd3g4e0pxEJbBifWKI6qTV9aHGDMPB305a7yVyQyjangK4T9v&currency=USD&intent=capture&components=buttons,funding-eligibility"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f3f3;
+      padding: 40px;
+    }
+    .box {
+      max-width: 420px;
+      margin: auto;
+      background: #fff;
+      padding: 24px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    #errbox {
+      display: none;
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #fff3f3;
+      color: #8a1f1f;
+      text-align: left;
+      font-size: 14px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+
+<div class="box">
+  <h2>PayPal Sandbox 測試</h2>
+  <p>測試金額：<b>USD 3.00</b></p>
+
+  <div id="paypal-button-container"></div>
+  <div id="errbox"></div>
+</div>
+
+<script>
+  function showError(title, data) {
+    const box = document.getElementById("errbox");
+    box.style.display = "block";
+    box.textContent =
+      "❌ " + title + "\n\n" +
+      (typeof data === "string" ? data : JSON.stringify(data, null, 2));
+  }
+
+  if (typeof paypal === "undefined") {
+    showError("PayPal SDK 未載入", "請檢查 Client ID 或瀏覽器是否阻擋 paypal.com");
+  } else {
+    paypal.Buttons({
+      createOrder: function (data, actions) {
+        return actions.order.create({
+          purchase_units: [{
+            amount: {
+              currency_code: "USD",
+              value: "3.00"
+            }
+          }]
+        });
+      },
+
+      onApprove: function (data, actions) {
+        return actions.order.capture().then(function (details) {
+          alert("✅ Sandbox 付款成功！");
+          console.log(details);
+        });
+      },
+
+      onError: function (err) {
+        console.error(err);
+        showError("PayPal onError", err);
+      }
+    }).render("#paypal-button-container");
+  }
+</script>
+
+</body>
+</html>
